@@ -1,3 +1,4 @@
+import sys
 from copy import copy
 
 
@@ -79,7 +80,7 @@ def variants_count(inventory, reminder, path) -> None:
         path = tuple(path) # make hashable
         if path not in variants:
             variants.add(path)
-            print(",".join([f'{i.capacity}({i._id})' for i in path]))
+            #print(",".join([f'{i.capacity}({i._id})' for i in path]))
     else:
         for i in range(len(inventory)):
             next_inventory = list(inventory)
@@ -91,9 +92,9 @@ def variants_count(inventory, reminder, path) -> None:
 
 
 if __name__ == '__main__':
-    version = 1
+    version = 0
 
-    if version == 0:
+    if version == 1:
         file = 'input1'
         liters = 25
     else:
@@ -110,3 +111,13 @@ if __name__ == '__main__':
     #variants_count(inventory, liters, set())
     # 2341 -- too high
     print('Part 1:', len(variants))
+
+    m = sys.maxsize
+    for v in variants:
+        if m > len(v):
+            m = len(v)
+
+    print('Minimum:', m)
+    variants = [v for v in variants if len(v) == m]
+
+    print('Part2:', len(variants))
