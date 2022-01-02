@@ -1,7 +1,60 @@
 from copy import copy
 
-ID = 0
-CAPACITY = 1
+
+class Container:
+    """
+    I am a container. I have a capacity. I am immutable and hashable.
+
+    Is hashable
+    >>> hash(Container(1, 1)) != 0
+    True
+
+    Tuple of containers is hashable
+    >>> hash(tuple([Container(1, 1), Container(1, 1)])) != 0
+    True
+
+    Two different instances with same capacity must not have same hash
+    >>> hash(Container(1, 10)) != hash(Container(2, 10))
+    True
+
+    Can be sorted by capacity if in list
+    >>> l = [Container(2, 10), Container(1, 5)]; sorted(l)
+    [Container(1,5), Container(2,10)]
+    """
+
+    last_id = 0
+
+    def __init__(self, id: int, capacity: int) -> None:
+        self._id = id
+        self._capacity = capacity
+        super().__init__()
+
+    @property
+    def capacity(self) -> int:
+        return self._capacity
+
+    def __eq__(self, other):
+        if isinstance(other, Container):
+            return other._id == self._id
+        raise NotImplemented()
+
+    def __hash__(self) -> int:
+        return hash(self._id)
+
+    def __repr__(self) -> str:
+        return f'Container({self._id},{self._capacity})'
+
+    def __lt__(self, other):
+        """
+        If same capacity, orer by id
+        >>> sorted([Container(2,5), Container(1,5)])
+        [Container(1,5), Container(2,5)]
+        """
+        if self._capacity == other._capacity:
+            return self._id < other._id
+        else:
+            return self._capacity < other._capacity
+
 
 variants = set()
 
@@ -9,14 +62,9 @@ def cache_variants_count(func):
     cache = []
 
     def wrapper(inventory, reminder, path):
-        ids = [str(i[0]) for i in inventory]
-        sorted(ids)
-        k1 = hash(tuple(ids))
-        p = list(path)
-        sorted(p)
-        k2 = tuple(path)
-
-        key = tuple([hash(k1), reminder, hash(k2)])
+        inventory = sorted(inventory)
+        path = sorted(path)
+        key = tuple([inventory, reminder, path])
         if key not in cache:
             func(inventory, reminder, path)
             cache.append(key)
@@ -27,24 +75,25 @@ def cache_variants_count(func):
 def variants_count(inventory, reminder, path) -> None:
     if reminder == 0:
         path = list(path)
-        sorted(path)
-        key = ','.join([str(p) for p in path])
-        if key not in variants:
-            variants.add(key)
+        path = sorted(path)
+        path = tuple(path) # make hashable
+        if path not in variants:
+            variants.add(path)
+            print(",".join([f'{i.capacity}({i._id})' for i in path]))
     else:
         for i in range(len(inventory)):
             next_inventory = list(inventory)
             container = next_inventory.pop(i)
-            if reminder - container[CAPACITY] >= 0:
+            if reminder - container.capacity >= 0:
                 next_path = copy(path)
-                next_path.add(container[ID])
-                variants_count(next_inventory, reminder - container[CAPACITY], next_path)
+                next_path.add(container)
+                variants_count(next_inventory, reminder - container.capacity, next_path)
 
 
 if __name__ == '__main__':
     version = 1
 
-    if version == 2:
+    if version == 0:
         file = 'input1'
         liters = 25
     else:
@@ -53,12 +102,11 @@ if __name__ == '__main__':
 
     inventory = []
     with open(file) as f:
-        id = 1
-        for l in f.readlines():
+        for i, l in enumerate(f.readlines()):
             capacity = int(l.strip())
-            inventory.append((id, capacity))
-            id += 1
+            inventory.append(Container(i, capacity))
+    inventory = sorted(inventory)
     cache_variants_count(variants_count(inventory, liters, set()))
+    #variants_count(inventory, liters, set())
     # 2341 -- too high
     print('Part 1:', len(variants))
-    print(variants)
