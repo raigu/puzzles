@@ -5,6 +5,25 @@ CAPACITY = 1
 
 variants = set()
 
+def cache_variants_count(func):
+    cache = []
+
+    def wrapper(inventory, reminder, path):
+        ids = [str(i[0]) for i in inventory]
+        sorted(ids)
+        k1 = hash(tuple(ids))
+        p = list(path)
+        sorted(p)
+        k2 = tuple(path)
+
+        key = tuple([hash(k1), reminder, hash(k2)])
+        if key not in cache:
+            func(inventory, reminder, path)
+            cache.append(key)
+
+    return wrapper
+
+
 def variants_count(inventory, reminder, path) -> None:
     if reminder == 0:
         path = list(path)
@@ -23,9 +42,9 @@ def variants_count(inventory, reminder, path) -> None:
 
 
 if __name__ == '__main__':
-    version = 2
+    version = 1
 
-    if version == 1:
+    if version == 2:
         file = 'input1'
         liters = 25
     else:
@@ -39,5 +58,7 @@ if __name__ == '__main__':
             capacity = int(l.strip())
             inventory.append((id, capacity))
             id += 1
-    variants_count(inventory, liters, set())
+    cache_variants_count(variants_count(inventory, liters, set()))
+    # 2341 -- too high
     print('Part 1:', len(variants))
+    print(variants)
